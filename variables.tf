@@ -4,7 +4,7 @@ variable "aws_region" {
 }
 
 variable "vpc_cidr" {
-    default = "10.5.0.0/16" 
+    default = "10.1.0.0/16" 
 }
 
 variable "private_cidr_block" {
