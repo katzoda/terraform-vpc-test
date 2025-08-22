@@ -1,4 +1,4 @@
 
 output "vpc_id" {
-    value = aws_vpc.test_vpc.id
+    value = aws_vpc.terra_vpc.id
 }
