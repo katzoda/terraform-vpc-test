@@ -24,3 +24,80 @@ resource "aws_subnet" "private_subnet" {
     }
 }
 
+# Public subnet
+resource "aws_subnet" "public_subnet" {
+    vpc_cidr = aws_vpc.terra_vpc.id
+    cidr_block = var.public_cidr_block
+    availability_zone = var.public_subnet_az
+    map_public_ip_on_launch = true
+}
+
+# Internet gateway for Terra VPC
+resource "aws_internet_gateway" "igw-terra-vpc" {
+    vpc_id = aws_vpc.terra_vpc.id
+    tags = {
+        Name = "IGW for terra vpc"
+    }
+}
+
+# Private route table
+resource "aws_route_table" "private-rt-terra" {
+    vpc_id = aws_vpc.terra_vpc.id
+    tags = {
+        Name = "private-rt-terra"
+    }
+}
+
+# Public route table
+resource "aws_route_table" "public-rt-terra" {
+    vpc_id = aws_vpc.terra_vpc.id
+    tags = {
+        Name = "public-rt-terra"
+    }
+}
+
+# Route for internet access
+resource "aws_route" "internet access" {
+    route_table_id = aws_route_table.public-rt-terra.id
+    destination_cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw-terra-vpc.id
+}
+
+# Launch EC2 into public subnet
+# Associate public RT table with public subnet
+# Create front end access security group with ssh icmp http rules
+
+resource "aws_security_group" "frontend-sg" {
+    name = "frontend-sg"
+    description = "Allow access from public internet/ ssh/ https/ icmp"
+    vpc_id = aws_vpc.terra_vpc.id
+    tags = {
+        Name = "frontend-sg"
+    }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
+    security_group_id = aws_security_group.frontend-sg.id
+    cidr_ipv4 = "0.0.0.0/0"
+    from_port = "22"
+    ip_protocol = "tcp"
+    to_port = "22"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
