@@ -26,10 +26,13 @@ resource "aws_subnet" "private_subnet" {
 
 # Public subnet
 resource "aws_subnet" "public_subnet" {
-    vpc_cidr = aws_vpc.terra_vpc.id
+    vpc_id = aws_vpc.terra_vpc.id
     cidr_block = var.public_cidr_block
     availability_zone = var.public_subnet_az
     map_public_ip_on_launch = true
+    tags = {
+        Name = "Private-eu-central-1b"
+    }
 }
 
 # Internet gateway for Terra VPC
@@ -57,7 +60,7 @@ resource "aws_route_table" "public-rt-terra" {
 }
 
 # Route for internet access
-resource "aws_route" "internet access" {
+resource "aws_route" "internet_access" {
     route_table_id = aws_route_table.public-rt-terra.id
     destination_cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw-terra-vpc.id
@@ -83,6 +86,20 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
     ip_protocol = "tcp"
     to_port = "22"
 }
+
+
+resource "aws_instance" "web_server" {
+    ami = "ami-015cbce10f839bd0c"
+    instance_type = "t2.micro"
+    subnet_id = aws_subnet.public_subnet.id
+    # If you are creating Instances in a VPC, use (terraform aws documentation):
+    vpc_security_group_ids = [aws_security_group.frontend-sg.id]
+
+    tags = {
+        Name = "web_server"
+    }
+}
+
 
 
 
