@@ -31,7 +31,7 @@ resource "aws_subnet" "public_subnet" {
     availability_zone = var.public_subnet_az
     map_public_ip_on_launch = true
     tags = {
-        Name = "Private-eu-central-1b"
+        Name = "Public-eu-central-1b"
     }
 }
 
@@ -59,17 +59,21 @@ resource "aws_route_table" "public-rt-terra" {
     }
 }
 
-# Route for internet access
-resource "aws_route" "internet_access" {
+# Associate public RT table with public subnet
+resource "aws_route_table_association" "public" {
+    subnet_id = aws_subnet.public_subnet.id
+    route_table_id = aws_route_table.public-rt-terra.id
+}
+
+# Default route - traffic directed to IGW
+resource "aws_route" "default_route" {
     route_table_id = aws_route_table.public-rt-terra.id
     destination_cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw-terra-vpc.id
 }
 
-# Launch EC2 into public subnet
-# Associate public RT table with public subnet
-# Create front end access security group with ssh icmp http rules
 
+# Security Group
 resource "aws_security_group" "frontend-sg" {
     name = "frontend-sg"
     description = "Allow access from public internet/ ssh/ https/ icmp"
@@ -79,6 +83,7 @@ resource "aws_security_group" "frontend-sg" {
     }
 }
 
+# Ingress rules
 resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
     security_group_id = aws_security_group.frontend-sg.id
     cidr_ipv4 = "0.0.0.0/0"
@@ -87,7 +92,9 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
     to_port = "22"
 }
 
+# Egress rule missing - to be added
 
+# EC2 instance - reachable from internet
 resource "aws_instance" "web_server" {
     ami = "ami-015cbce10f839bd0c"
     instance_type = "t2.micro"
